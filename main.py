@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "postgresql://postgres:1234@localhost/IPlocator"
+DATABASE_URL = "postgresql://postgres:1234@db/IPlocator"
 
 engine = create_engine(DATABASE_URL)
 
@@ -20,6 +20,7 @@ class RequestLog(Base):
     ip_address = Column(String)                        # ip search
     city_found = Column(String)                        # city found
     created_at = Column(DateTime, default=datetime.now) # date
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 @app.get("/city")

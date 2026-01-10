@@ -41,12 +41,24 @@ def get_city_from_ip(ip: str):
         db.add(new_record)
         db.commit()
         db.refresh(new_record)
+
+        count = db.query(RequestLog).filter(RequestLog.city_found == city_name).count()
+
+        if count == 0:
+            frequency_text = "Ни разу"
+        elif count <= 5:
+            frequency_text = "Мало"
+        elif count <= 15:
+            frequency_text = "Много"
+        else:
+            frequency_text = "Очень много"
     finally:
         db.close()
 
     return {
-        "status": "success",
-        "saved_id": new_record.id,
         "ip": ip,
-        "city": city_name
+        "city": city_name,
+        "frequency": frequency_text,
+        "count_debug": count,
+        "saved_id": new_record.id
     }

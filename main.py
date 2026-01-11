@@ -5,26 +5,27 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "postgresql://postgres:1234@db/IPlocator"
+DATABASE_URL = "postgresql://postgres:1234@db/IPlocator" # Настройки подключения к БД
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL) # Движок для соединения с базой
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) # Создание сессий
 
-Base = declarative_base()
+Base = declarative_base() # Базовый класс
 
-class RequestLog(Base):
+class RequestLog(Base): # Описание таблицы
     __tablename__ = "requests_log"
 
     id = Column(Integer, primary_key=True, index=True) # unique id
     ip_address = Column(String)                        # ip search
     city_found = Column(String)                        # city found
     created_at = Column(DateTime, default=datetime.now) # date
-Base.metadata.create_all(bind=engine)
-app = FastAPI()
 
-@app.get("/city")
-def get_city_from_ip(ip: str):
+Base.metadata.create_all(bind=engine) # Если нет БД, создаст
+app = FastAPI() # Веб
+
+@app.get("/city") # Эндпоинт
+def get_city_from_ip(ip: str): # Внешний API
     try:
         response = requests.get(f"http://ip-api.com/json/{ip}")
         data = response.json()
@@ -32,8 +33,9 @@ def get_city_from_ip(ip: str):
     except:
         city_name = "Ошибка API"
 
-    db = SessionLocal()
-    try:
+    db = SessionLocal() # Сессия для БД
+
+    try: # Создание записи
         new_record = RequestLog(
             ip_address=ip,
             city_found=city_name
@@ -42,7 +44,7 @@ def get_city_from_ip(ip: str):
         db.commit()
         db.refresh(new_record)
 
-        count = db.query(RequestLog).filter(RequestLog.city_found == city_name).count()
+        count = db.query(RequestLog).filter(RequestLog.city_found == city_name).count() # Подсчет кол-ва попадающихся записей в таблице
 
         if count == 0:
             frequency_text = "Ни разу"
@@ -55,6 +57,7 @@ def get_city_from_ip(ip: str):
     finally:
         db.close()
 
+    # Возврат
     return {
         "ip": ip,
         "city": city_name,
